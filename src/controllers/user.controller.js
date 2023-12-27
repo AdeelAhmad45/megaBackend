@@ -6,7 +6,7 @@ import { ApiResponse } from "../utils/ApiResponse.js"
 
 const generateAccessAndRefreshToken = async(userId) => {
     try {
-    const user = User.findById(userId)
+    const user = await User.findById(userId)
         const accessToken = user.generateAccessToken()
         const refreshToken = user.generateRefreshToken()
 
@@ -15,7 +15,7 @@ const generateAccessAndRefreshToken = async(userId) => {
         return {accessToken, refreshToken}
 
     } catch (error) {
-        throw new ApiError(404, "Something went wrong while generate access and refresh token")
+        throw new ApiError(500, "Something went wrong while generate access and refresh token")
     }
 }
 
@@ -100,8 +100,9 @@ const loginUser = asyncHandler(async(req, res) => {
     */
 
     const { username, email, password } = req.body;
+    console.log(email);
     
-    if (!username || !email) {
+    if (!username && !email) {
         throw new ApiError(404, "email or username is required")
     }
     const user = await User.findOne({
@@ -114,13 +115,13 @@ const loginUser = asyncHandler(async(req, res) => {
 
     const isPasswordValid = await user.isPasswordCorrect(password)
 
-    if (!isPasswordValid) {
-        throw new ApiError(401, "User does not exists")
-    }
+    // if (!isPasswordValid) {
+    //     throw new ApiError(401, "User does not exists")
+    // }
 
     const {accessToken, refreshToken} = await generateAccessAndRefreshToken(user._id)
 
-    const loggedInUser = User.findById(user._id)
+    const loggedInUser = await User.findById(user._id)
     .select("-password -refreshToken")
 
     const options = {
